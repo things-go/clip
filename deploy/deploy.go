@@ -8,20 +8,20 @@ import (
 type Deploy int
 
 const (
-	None  Deploy = iota // none
-	Debug               // debug
-	Dev                 // dev
-	Uat                 // uat
-	Prod                // prod
+	None Deploy = iota // none
+	Dev                // dev
+	Test               // test
+	Uat                // uat
+	Prod               // prod
 )
 
 var deploy = None
 
-// Convert convert string to Deploy
+// Convert m to Deploy
 func Convert(m string) Deploy {
 	switch m {
-	case Debug.String():
-		return Debug
+	case Test.String():
+		return Test
 	case Dev.String():
 		return Dev
 	case Uat.String():
@@ -41,11 +41,11 @@ func Set(m Deploy) {
 // Get 获取当前的布署模式
 func Get() Deploy { return deploy }
 
-// IsDevelop 是否开发模式
-func IsDevelop() bool { return deploy == Dev }
+// IsDev 是否开发模式
+func IsDev() bool { return deploy == Dev }
 
-// IsDebug 是否调试模式
-func IsDebug() bool { return deploy == Debug }
+// IsTest 是否测试模式
+func IsTest() bool { return deploy == Test }
 
 // IsUat 是否预发布模式
 func IsUat() bool { return deploy == Uat }
@@ -53,10 +53,10 @@ func IsUat() bool { return deploy == Uat }
 // IsProduction 是否生产模式
 func IsProduction() bool { return deploy == Prod }
 
-// IsTest 测试: 开发或者调试
-func IsTest() bool { return IsDevelop() || IsDebug() }
+// IsTesting 测试, 开发或者调试
+func IsTesting() bool { return IsDev() || IsTest() }
 
-// IsRelease 预发或者生产环境
+// IsRelease 发布, 预发或者生产环境
 func IsRelease() bool { return IsUat() || IsProduction() }
 
 // MustSetDeploy 设置布署模式, 不得为 None 模式, 否则panic
@@ -73,6 +73,6 @@ func GetDeploy() string {
 // CheckMustDeploy 校验当前的布署环境必须设置非 unknown 模式, 否则panic
 func CheckMustDeploy() {
 	if deploy == None {
-		log.Fatalf("Please set deploy mode first, must be one of local, dev, debug, uat, prod")
+		log.Fatalf("Please set deploy mode first, must be one of dev, test, uat, prod")
 	}
 }

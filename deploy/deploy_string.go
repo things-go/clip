@@ -9,15 +9,15 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[None-0]
-	_ = x[Debug-1]
-	_ = x[Dev-2]
+	_ = x[Dev-1]
+	_ = x[Test-2]
 	_ = x[Uat-3]
 	_ = x[Prod-4]
 }
 
-const _Deploy_name = "nonedebugdevuatprod"
+const _Deploy_name = "nonedevtestuatprod"
 
-var _Deploy_index = [...]uint8{0, 4, 9, 12, 15, 19}
+var _Deploy_index = [...]uint8{0, 4, 7, 11, 14, 18}
 
 func (i Deploy) String() string {
 	if i < 0 || i >= Deploy(len(_Deploy_index)-1) {
