@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	testData "github.com/things-go/dyn/testdata/encoding"
+	testData "github.com/things-go/core/testdata/encoding"
 )
 
 func TestCodec(t *testing.T) {

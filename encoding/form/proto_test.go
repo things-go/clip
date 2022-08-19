@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	testData "github.com/things-go/dyn/testdata/encoding"
+	testData "github.com/things-go/core/testdata/encoding"
 )
 
 func TestProtoCodec(t *testing.T) {

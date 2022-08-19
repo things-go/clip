@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	testData "github.com/things-go/dyn/testdata/encoding"
+	testData "github.com/things-go/core/testdata/encoding"
 )
 
 type testEmbed struct {
