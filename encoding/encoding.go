@@ -3,6 +3,8 @@ package encoding
 import (
 	"sort"
 	"sync"
+
+	"golang.org/x/exp/maps"
 )
 
 // Codec defines the interface Transport uses to encode and decode messages.  Note
@@ -42,10 +44,7 @@ func Register(codec Codec) {
 func Codecs() []string {
 	codecsMu.RLock()
 	defer codecsMu.RUnlock()
-	names := make([]string, 0, len(codecs))
-	for name := range codecs {
-		names = append(names, name)
-	}
+	names := maps.Keys(codecs)
 	sort.Strings(names)
 	return names
 }

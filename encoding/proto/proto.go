@@ -24,10 +24,6 @@ func New() Codec { return Codec{} }
 // Codec is a Codec implementation with protobuf.
 type Codec struct{}
 
-func (Codec) Name() string { return "proto" }
-func (Codec) Marshal(v any) ([]byte, error) {
-	return proto.Marshal(v.(proto.Message))
-}
-func (Codec) Unmarshal(data []byte, v any) error {
-	return proto.Unmarshal(data, v.(proto.Message))
-}
+func (Codec) Name() string                       { return "proto" }
+func (Codec) Marshal(v any) ([]byte, error)      { return proto.Marshal(v.(proto.Message)) }
+func (Codec) Unmarshal(data []byte, v any) error { return proto.Unmarshal(data, v.(proto.Message)) }

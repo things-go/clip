@@ -22,10 +22,6 @@ func New() Codec { return Codec{} }
 // Codec is a Codec implementation with xml.
 type Codec struct{}
 
-func (Codec) Name() string { return "xml" }
-func (Codec) Marshal(v any) ([]byte, error) {
-	return xml.Marshal(v)
-}
-func (Codec) Unmarshal(data []byte, v any) error {
-	return xml.Unmarshal(data, v)
-}
+func (Codec) Name() string                       { return "xml" }
+func (Codec) Marshal(v any) ([]byte, error)      { return xml.Marshal(v) }
+func (Codec) Unmarshal(data []byte, v any) error { return xml.Unmarshal(data, v) }

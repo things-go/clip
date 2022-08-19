@@ -14,25 +14,28 @@ var defaultCodec = New()
 func init() {
 	encoding.Register(defaultCodec)
 }
-
+func ReplaceDefaultCodec(codec Codec)    { defaultCodec = codec }
 func Name() string                       { return defaultCodec.Name() }
 func Marshal(v any) ([]byte, error)      { return defaultCodec.Marshal(v) }
 func Unmarshal(data []byte, v any) error { return defaultCodec.Unmarshal(data, v) }
 
 type Option func(*Codec)
 
+// WithMarshalOptions is a configurable JSON format marshaler for proto.
 func WithMarshalOptions(marshalOpts protojson.MarshalOptions) Option {
 	return func(c *Codec) {
 		c.marshalOpts = marshalOpts
 	}
 }
 
+// WithUnmarshalOptions is a configurable JSON format parser for proto.
 func WithUnmarshalOptions(unmarshalOpts protojson.UnmarshalOptions) Option {
 	return func(c *Codec) {
 		c.unmarshalOpts = unmarshalOpts
 	}
 }
 
+// WithDisableProtoJSON disable proto json codec.
 func WithDisableProtoJSON() Option {
 	return func(c *Codec) {
 		c.disableProtoJSON = true

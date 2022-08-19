@@ -22,10 +22,6 @@ type Codec struct{}
 // New returns a new Codec
 func New() Codec { return Codec{} }
 
-func (Codec) Name() string { return "yaml" }
-func (Codec) Marshal(v any) ([]byte, error) {
-	return yaml.Marshal(v)
-}
-func (Codec) Unmarshal(data []byte, v any) error {
-	return yaml.Unmarshal(data, v)
-}
+func (Codec) Name() string                       { return "yaml" }
+func (Codec) Marshal(v any) ([]byte, error)      { return yaml.Marshal(v) }
+func (Codec) Unmarshal(data []byte, v any) error { return yaml.Unmarshal(data, v) }

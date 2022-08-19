@@ -67,6 +67,7 @@ func (a *mock) MarshalJSON() ([]byte, error) {
 }
 
 func TestJSON(t *testing.T) {
+	ReplaceDefaultCodec(defaultCodec)
 	t.Run("name", func(t *testing.T) {
 		require.Equal(t, "json", New().Name())
 	})

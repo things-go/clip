@@ -89,7 +89,6 @@ func New(opts ...Option) Codec {
 }
 
 func (Codec) Name() string { return "x-www-form-urlencoded" }
-
 func (c Codec) Marshal(v any) ([]byte, error) {
 	vs, err := c.Encode(v)
 	if err != nil {
@@ -97,7 +96,6 @@ func (c Codec) Marshal(v any) ([]byte, error) {
 	}
 	return []byte(vs.Encode()), nil
 }
-
 func (c Codec) Unmarshal(data []byte, v any) error {
 	vs, err := url.ParseQuery(string(data))
 	if err != nil {
