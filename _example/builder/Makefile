@@ -1,7 +1,7 @@
 NAME=builder
 VERSION=v0.0.1
 
-GIT_IMPORT=github.com/things-go/core/builder
+GIT_IMPORT=github.com/things-go/clip/builder
 GIT_COMMIT=$(shell git rev-parse --short HEAD)
 GIT_FULL_COMMIT=$(shell git rev-parse HEAD)
 GIT_TAG=$(shell git describe --abbrev=0 --tags --always --match "v*")

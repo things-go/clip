@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/things-go/core/encoding"
+	"github.com/things-go/clip/encoding"
 )
 
 var defaultCodec = New()

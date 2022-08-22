@@ -3,7 +3,7 @@ package yaml
 import (
 	"gopkg.in/yaml.v3"
 
-	"github.com/things-go/core/encoding"
+	"github.com/things-go/clip/encoding"
 )
 
 var defaultCodec = New()

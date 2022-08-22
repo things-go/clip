@@ -1,4 +1,4 @@
-module github.com/things-go/core
+module github.com/things-go/clip
 
 go 1.18
 

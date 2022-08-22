@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/things-go/core/builder"
+	"github.com/things-go/clip/builder"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package xml
 import (
 	"encoding/xml"
 
-	"github.com/things-go/core/encoding"
+	"github.com/things-go/clip/encoding"
 )
 
 var defaultCodec = New()

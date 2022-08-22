@@ -3,7 +3,7 @@
 package proto
 
 import (
-	"github.com/things-go/core/encoding"
+	"github.com/things-go/clip/encoding"
 
 	"google.golang.org/protobuf/proto"
 )

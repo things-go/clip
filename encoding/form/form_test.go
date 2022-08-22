@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/things-go/core/testdata/encoding"
+	"github.com/things-go/clip/testdata/encoding"
 )
 
 type LoginRequest struct {
