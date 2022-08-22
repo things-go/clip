@@ -247,7 +247,7 @@ func getValueWithField(s any, fieldPath []string, tagName string) (string, error
 		v = v.Elem()
 	}
 
-	return cast.ToString(v), nil
+	return cast.ToString(v.Interface()), nil
 }
 
 func findField(v reflect.Value, searchName, tagName string) reflect.Value {
