@@ -132,10 +132,10 @@ type VerifiedLimit struct {
 	resendIntervalSec int              // 重发验证码间隔时间, 默认60, 单位: 秒
 }
 
-// Option sms选项
+// Option VerifiedLimit 选项
 type Option func(*VerifiedLimit)
 
-// WithVerifiedKeyPrefix redis存验证码key的前缀, 默认 SMS:
+// WithVerifiedKeyPrefix redis存验证码key的前缀, 默认 limit:verified:
 func WithVerifiedKeyPrefix(k string) Option {
 	return func(v *VerifiedLimit) {
 		if k != "" {
@@ -252,7 +252,7 @@ func (v *VerifiedLimit) VerifyCode(target, code string) error {
 
 	sts, ok := result.(int64)
 	if !ok {
-		err = ErrUnknownCode
+		return ErrUnknownCode
 	}
 	switch sts {
 	case innerVerifiedLimitSuccess:
