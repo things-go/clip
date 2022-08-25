@@ -25,6 +25,57 @@ func TestIsMobile(t *testing.T) {
 	}
 }
 
+func TestIsDecimal(t *testing.T) {
+	tests := []struct {
+		name string
+		args string
+		want bool
+	}{
+		{
+			"empty",
+			"",
+			false,
+		},
+		{
+			"zero",
+			"0",
+			true,
+		},
+		{
+			"多个0",
+			"00",
+			true,
+		},
+		{
+			"<0",
+			"-11",
+			true,
+		},
+		{
+			">0",
+			"11",
+			true,
+		},
+		{
+			">0带符号",
+			"+11",
+			true,
+		},
+		{
+			"浮点",
+			"1.1",
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsDecimal(tt.args); got != tt.want {
+				t.Errorf("IsDecimal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestIsNumberGtZero(t *testing.T) {
 	tests := []struct {
 		name string

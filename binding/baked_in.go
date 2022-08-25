@@ -9,6 +9,12 @@ func IsMobile(s string) bool {
 	return rxPhone.MatchString(s)
 }
 
+// IsDecimal 是否是 decimal
+func IsDecimal(s string) bool {
+	_, err := decimal.NewFromString(s)
+	return err == nil
+}
+
 // IsDecimalGt 是否是 decimal且大于t
 func IsDecimalGt(s, t string) bool {
 	d, tt, err := parseString2Decimal(s, t)

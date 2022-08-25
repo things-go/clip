@@ -124,7 +124,7 @@ type VerifiedProvider interface {
 type VerifiedLimit struct {
 	p                 VerifiedProvider // VerifiedProvider send code
 	store             *redis.Client    // store client
-	keyPrefix         string           // store 存验证码key的前缀, 默认 verified:
+	keyPrefix         string           // store 存验证码key的前缀, 默认 limit:verified:
 	keyExpires        time.Duration    // store 存验证码key的过期时间, 默认: 24 小时
 	maxErrorQuota     int              // 最大验证失败次数, 默认: 3
 	maxSendPerDay     int              // 验证码一天最大发送次数, 默认: 10

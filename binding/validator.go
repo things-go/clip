@@ -22,6 +22,7 @@ func RegisterValidation(valid *validator.Validate) error {
 
 	err := multierr.Combine(
 		valid.RegisterValidation("mobile", ValidIsMobile),
+		valid.RegisterValidation("decimal", ValidIsDecimal),
 		valid.RegisterValidation("decimal_gt", ValidIsDecimalGt),
 		valid.RegisterValidation("decimal_gte", ValidIsDecimalGte),
 		valid.RegisterValidation("decimal_lt", ValidIsDecimalLt),
@@ -40,6 +41,16 @@ func RegisterValidation(valid *validator.Validate) error {
 // ValidIsMobile 校验是否为手机
 func ValidIsMobile(fl validator.FieldLevel) bool {
 	return IsMobile(fl.Field().String())
+}
+
+// ValidIsDecimal 校验是否为字符串 decimal
+func ValidIsDecimal(fl validator.FieldLevel) bool {
+	field := fl.Field()
+	if field.Kind() == reflect.String {
+		return IsDecimal(field.String())
+	}
+
+	panic(fmt.Sprintf("Bad field type %T", field.Interface()))
 }
 
 // ValidIsDecimalGt 校验是否为字符串数字且大于0
