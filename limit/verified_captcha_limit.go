@@ -2,7 +2,6 @@ package limit
 
 import (
 	"context"
-	"log"
 	"strings"
 	"time"
 
@@ -118,7 +117,6 @@ func (v *VerifiedCaptchaLimit) Match(id, answer string, clear bool) (matched boo
 	if clear {
 		s = "1"
 	}
-	log.Println(v.store.Get(context.Background(), v.keyPrefix+id).Result())
 	result, err := v.store.Eval(
 		context.Background(),
 		verifiedLimitCaptchaScript,
