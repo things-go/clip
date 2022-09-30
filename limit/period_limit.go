@@ -3,7 +3,6 @@ package limit
 import (
 	"context"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -71,15 +70,11 @@ type PeriodLimit struct {
 }
 
 // NewPeriodLimit returns a PeriodLimit with given parameters.
-func NewPeriodLimit(periodSecond, quota int, keyPrefix string,
-	store *redis.Client, opts ...PeriodLimitOption) *PeriodLimit {
-	if !strings.HasSuffix(keyPrefix, ":") {
-		keyPrefix += ":"
-	}
+func NewPeriodLimit(store *redis.Client, opts ...PeriodLimitOption) *PeriodLimit {
 	limiter := &PeriodLimit{
-		period:    periodSecond,
-		quota:     quota,
-		keyPrefix: keyPrefix,
+		period:    int(24 * time.Hour / time.Second),
+		quota:     6,
+		keyPrefix: "LIMIT:PERIOD:",
 		store:     store,
 	}
 	for _, opt := range opts {
@@ -88,14 +83,23 @@ func NewPeriodLimit(periodSecond, quota int, keyPrefix string,
 	return limiter
 }
 
-func (p *PeriodLimit) align() { p.isAlign = true }
+func (p *PeriodLimit) align()                { p.isAlign = true }
+func (p *PeriodLimit) setKeyPrefix(k string) { p.keyPrefix = k }
+func (p *PeriodLimit) setPeriod(v time.Duration) {
+	if vv := int(v / time.Second); vv > 0 {
+		p.period = int(v / time.Second)
+	}
+}
+func (p *PeriodLimit) setQuota(v int) { p.quota = v }
 
 // Take requests a permit with context, it returns the permit state.
-func (p *PeriodLimit) Take(ctx context.Context, key string) (PeriodLimitState, error) {
+func (p *PeriodLimit) Take(ctx context.Context, kind, key string, opts ...PeriodLimitParamOption) (PeriodLimitState, error) {
+	po := p.takePeriodLimitParamOption(opts...)
+
 	result, err := p.store.Eval(ctx,
 		periodLimitScript,
-		[]string{p.keyPrefix + key},
-		[]string{strconv.Itoa(p.quota), strconv.Itoa(p.calcExpireSeconds())},
+		[]string{p.formatKey(kind, key)},
+		[]string{strconv.Itoa(po.quota), strconv.Itoa(po.calcExpireSeconds(p.isAlign))},
 	).Result()
 	if err != nil {
 		return PeriodLimitStsUnknown, err
@@ -119,11 +123,13 @@ func (p *PeriodLimit) Take(ctx context.Context, key string) (PeriodLimitState, e
 }
 
 // SetQuotaFull set a permit over quota.
-func (p *PeriodLimit) SetQuotaFull(ctx context.Context, key string) error {
+func (p *PeriodLimit) SetQuotaFull(ctx context.Context, kind, key string, opts ...PeriodLimitParamOption) error {
+	po := p.takePeriodLimitParamOption(opts...)
+
 	err := p.store.Eval(ctx,
 		periodLimitSetQuotaFullScript,
-		[]string{p.keyPrefix + key},
-		[]string{strconv.Itoa(p.quota)},
+		[]string{p.formatKey(kind, key)},
+		[]string{strconv.Itoa(po.quota)},
 	).Err()
 	if err == redis.Nil {
 		return nil
@@ -132,20 +138,20 @@ func (p *PeriodLimit) SetQuotaFull(ctx context.Context, key string) error {
 }
 
 // Del delete a permit
-func (p *PeriodLimit) Del(ctx context.Context, key string) error {
-	return p.store.Del(ctx, p.keyPrefix+key).Err()
+func (p *PeriodLimit) Del(ctx context.Context, kind, key string) error {
+	return p.store.Del(ctx, p.formatKey(kind, key)).Err()
 }
 
 // TTL get key ttl
 // if key not exist, time = -1.
 // if key exist, but not set expire time, t = -2
-func (p *PeriodLimit) TTL(ctx context.Context, key string) (time.Duration, error) {
-	return p.store.TTL(ctx, p.keyPrefix+key).Result()
+func (p *PeriodLimit) TTL(ctx context.Context, kind, key string) (time.Duration, error) {
+	return p.store.TTL(ctx, p.formatKey(kind, key)).Result()
 }
 
 // GetInt get current count
-func (p *PeriodLimit) GetInt(ctx context.Context, key string) (int, bool, error) {
-	v, err := p.store.Get(ctx, p.keyPrefix+key).Int()
+func (p *PeriodLimit) GetInt(ctx context.Context, kind, key string) (int, bool, error) {
+	v, err := p.store.Get(ctx, p.formatKey(kind, key)).Int()
 	if err != nil {
 		if err == redis.Nil {
 			return 0, false, nil
@@ -155,12 +161,17 @@ func (p *PeriodLimit) GetInt(ctx context.Context, key string) (int, bool, error)
 	return v, true, nil
 }
 
-func (p *PeriodLimit) calcExpireSeconds() int {
-	if p.isAlign {
-		now := time.Now()
-		_, offset := now.Zone()
-		unix := now.Unix() + int64(offset)
-		return p.period - int(unix%int64(p.period))
+func (p *PeriodLimit) formatKey(kind, key string) string {
+	return p.keyPrefix + kind + ":" + key
+}
+
+func (p *PeriodLimit) takePeriodLimitParamOption(opts ...PeriodLimitParamOption) periodLimitParamOption {
+	po := periodLimitParamOption{
+		quota:  p.quota,
+		period: p.period,
 	}
-	return p.period
+	for _, f := range opts {
+		f(&po)
+	}
+	return po
 }

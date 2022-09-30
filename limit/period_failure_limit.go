@@ -3,7 +3,6 @@ package limit
 import (
 	"context"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -88,15 +87,11 @@ type PeriodFailureLimit struct {
 }
 
 // NewPeriodFailureLimit returns a PeriodFailureLimit with given parameters.
-func NewPeriodFailureLimit(periodSecond, quota int, keyPrefix string, store *redis.Client,
-	opts ...PeriodLimitOption) *PeriodFailureLimit {
-	if !strings.HasSuffix(keyPrefix, ":") {
-		keyPrefix += ":"
-	}
+func NewPeriodFailureLimit(store *redis.Client, opts ...PeriodLimitOption) *PeriodFailureLimit {
 	limiter := &PeriodFailureLimit{
-		period:    periodSecond,
-		quota:     quota,
-		keyPrefix: keyPrefix,
+		period:    int(24 * time.Hour / time.Second),
+		quota:     6,
+		keyPrefix: "LIMIT:PERIOD:FAILURE:", // "LIMIT:PERIOD:FAILURE:"
 		store:     store,
 	}
 	for _, opt := range opts {
@@ -105,26 +100,35 @@ func NewPeriodFailureLimit(periodSecond, quota int, keyPrefix string, store *red
 	return limiter
 }
 
-func (p *PeriodFailureLimit) align() { p.isAlign = true }
+func (p *PeriodFailureLimit) align()                { p.isAlign = true }
+func (p *PeriodFailureLimit) setKeyPrefix(k string) { p.keyPrefix = k }
+func (p *PeriodFailureLimit) setPeriod(v time.Duration) {
+	if vv := int(v / time.Second); vv > 0 {
+		p.period = int(v / time.Second)
+	}
+}
+func (p *PeriodFailureLimit) setQuota(v int) { p.quota = v }
 
 // CheckErr requests a permit state.
 // same as Check
-func (p *PeriodFailureLimit) CheckErr(ctx context.Context, key string, err error) (PeriodFailureLimitState, error) {
-	return p.Check(ctx, key, err == nil)
+func (p *PeriodFailureLimit) CheckErr(ctx context.Context, kind, key string, err error, opts ...PeriodLimitParamOption) (PeriodFailureLimitState, error) {
+	return p.Check(ctx, kind, key, err == nil, opts...)
 }
 
 // Check requests a permit.
-func (p *PeriodFailureLimit) Check(ctx context.Context, key string, success bool) (PeriodFailureLimitState, error) {
+func (p *PeriodFailureLimit) Check(ctx context.Context, kind, key string, success bool, opts ...PeriodLimitParamOption) (PeriodFailureLimitState, error) {
+	po := p.takePeriodLimitParamOption(opts...)
+
 	s := "0"
 	if success {
 		s = "1"
 	}
 	result, err := p.store.Eval(ctx,
 		periodFailureLimitScript,
-		[]string{p.keyPrefix + key},
+		[]string{p.formatKey(kind, key)},
 		[]string{
-			strconv.Itoa(p.quota),
-			strconv.Itoa(p.calcExpireSeconds()),
+			strconv.Itoa(po.quota),
+			strconv.Itoa(po.calcExpireSeconds(p.isAlign)),
 			s,
 		},
 	).Result()
@@ -148,11 +152,13 @@ func (p *PeriodFailureLimit) Check(ctx context.Context, key string, success bool
 }
 
 // SetQuotaFull set a permit over quota.
-func (p *PeriodFailureLimit) SetQuotaFull(ctx context.Context, key string) error {
+func (p *PeriodFailureLimit) SetQuotaFull(ctx context.Context, kind, key string, opts ...PeriodLimitParamOption) error {
+	po := p.takePeriodLimitParamOption(opts...)
+
 	err := p.store.Eval(ctx,
 		periodFailureLimitSetQuotaFullScript,
-		[]string{p.keyPrefix + key},
-		[]string{strconv.Itoa(p.quota)},
+		[]string{p.formatKey(kind, key)},
+		[]string{strconv.Itoa(po.quota)},
 	).Err()
 	if err == redis.Nil {
 		return nil
@@ -161,20 +167,20 @@ func (p *PeriodFailureLimit) SetQuotaFull(ctx context.Context, key string) error
 }
 
 // Del delete a permit
-func (p *PeriodFailureLimit) Del(ctx context.Context, key string) error {
-	return p.store.Del(ctx, p.keyPrefix+key).Err()
+func (p *PeriodFailureLimit) Del(ctx context.Context, kind, key string) error {
+	return p.store.Del(ctx, p.formatKey(kind, key)).Err()
 }
 
 // TTL get key ttl
 // if key not exist, time = -1.
 // if key exist, but not set expire time, t = -2
-func (p *PeriodFailureLimit) TTL(ctx context.Context, key string) (time.Duration, error) {
-	return p.store.TTL(ctx, p.keyPrefix+key).Result()
+func (p *PeriodFailureLimit) TTL(ctx context.Context, kind, key string) (time.Duration, error) {
+	return p.store.TTL(ctx, p.formatKey(kind, key)).Result()
 }
 
 // GetInt get current failure count
-func (p *PeriodFailureLimit) GetInt(ctx context.Context, key string) (int, bool, error) {
-	v, err := p.store.Get(ctx, p.keyPrefix+key).Int()
+func (p *PeriodFailureLimit) GetInt(ctx context.Context, kind, key string) (int, bool, error) {
+	v, err := p.store.Get(ctx, p.formatKey(kind, key)).Int()
 	if err != nil {
 		if err == redis.Nil {
 			return 0, false, nil
@@ -184,12 +190,17 @@ func (p *PeriodFailureLimit) GetInt(ctx context.Context, key string) (int, bool,
 	return v, true, nil
 }
 
-func (p *PeriodFailureLimit) calcExpireSeconds() int {
-	if p.isAlign {
-		now := time.Now()
-		_, offset := now.Zone()
-		unix := now.Unix() + int64(offset)
-		return p.period - int(unix%int64(p.period))
+func (p *PeriodFailureLimit) formatKey(kind, key string) string {
+	return p.keyPrefix + kind + ":" + key
+}
+
+func (p *PeriodFailureLimit) takePeriodLimitParamOption(opts ...PeriodLimitParamOption) periodLimitParamOption {
+	po := periodLimitParamOption{
+		quota:  p.quota,
+		period: p.period,
 	}
-	return p.period
+	for _, f := range opts {
+		f(&po)
+	}
+	return po
 }
