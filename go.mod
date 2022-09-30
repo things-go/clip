@@ -5,16 +5,16 @@ go 1.18
 require (
 	github.com/alicebob/miniredis/v2 v2.23.0
 	github.com/go-playground/form/v4 v4.2.0
-	github.com/go-playground/validator/v10 v10.11.0
+	github.com/go-playground/validator/v10 v10.11.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
-	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
-	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
-	google.golang.org/genproto v0.0.0-20220819174105-e9f053255caa
+	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be
+	golang.org/x/exp v0.0.0-20220929160808-de9c53c655b9
+	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af
+	google.golang.org/genproto v0.0.0-20220929141241-1ce7b20da813
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -30,7 +30,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
-	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6 // indirect
+	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
 	golang.org/x/text v0.3.7 // indirect
 )

@@ -71,6 +71,7 @@ func WithVerifiedCaptchaKeyExpires(expires time.Duration) VerifiedCaptchaOption 
 }
 
 // NewVerifiedCaptcha
+// Deprecated: use verified package
 func NewVerifiedCaptcha(p CaptchaProvider, store *redis.Client, opts ...VerifiedCaptchaOption) *VerifiedCaptchaLimit {
 	v := &VerifiedCaptchaLimit{
 		p,
