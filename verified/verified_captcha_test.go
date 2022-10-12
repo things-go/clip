@@ -13,6 +13,9 @@ import (
 )
 
 const defaultKind = "default"
+const question = "1+1"
+const answer = "2"
+const badAnswer = "3"
 
 var defaultAlphabet = []byte("QWERTYUIOPLKJHGFDSAZXCVBNMabcdefghijklmnopqrstuvwxyz")
 
@@ -53,8 +56,8 @@ func (t TestVerifiedCaptchaDriver) Name() string { return "test_provider" }
 func (t TestVerifiedCaptchaDriver) GenerateQuestionAnswer() (*QuestionAnswer, error) {
 	return &QuestionAnswer{
 		Id:       randString(6),
-		Question: "1+1",
-		Answer:   "2",
+		Question: question,
+		Answer:   answer,
 	}, nil
 }
 
@@ -69,7 +72,7 @@ func TestVerifiedCaptcha_RedisUnavailable(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestVerifiedCaptchaLimit(t *testing.T) {
+func TestVerifiedCaptcha_OneTime(t *testing.T) {
 	mr, err := miniredis.Run()
 	assert.NoError(t, err)
 
@@ -81,42 +84,88 @@ func TestVerifiedCaptchaLimit(t *testing.T) {
 		WithKeyPrefix("verified:captcha:"),
 		WithKeyExpires(time.Minute*3),
 	)
+
 	id, _, err := l.Generate(defaultKind, WithGenerateKeyExpires(time.Minute*5))
 	assert.NoError(t, err)
 
-	b := l.Match(defaultKind, id, "2", false)
+	b := l.Verify(defaultKind, id, answer)
 	require.True(t, b)
 
-	b = l.Verify(defaultKind, id, "3")
-	require.False(t, b)
-
-	b = l.Match(defaultKind, id, "2", false)
+	b = l.Verify(defaultKind, id, answer)
 	require.False(t, b)
 }
 
-// // TODO: success in redis, but failed in miniredis
-// func TestVerifiedCaptcha_Timeout(t *testing.T) {
+func TestVerifiedCaptcha_in_quota(t *testing.T) {
+	mr, err := miniredis.Run()
+	assert.NoError(t, err)
+
+	defer mr.Close()
+
+	l := NewVerifiedCaptcha(
+		new(TestVerifiedCaptchaProvider),
+		redis.NewClient(&redis.Options{Addr: mr.Addr()}),
+		WithKeyPrefix("verified:captcha:"),
+		WithKeyExpires(time.Minute*3),
+		WithMaxErrQuota(3),
+	)
+
+	id, _, err := l.Generate(defaultKind,
+		WithGenerateKeyExpires(time.Minute*5),
+	)
+	assert.NoError(t, err)
+
+	b := l.Verify(defaultKind, id, badAnswer)
+	require.False(t, b)
+	b = l.Verify(defaultKind, id, badAnswer)
+	require.False(t, b)
+	b = l.Verify(defaultKind, id, answer)
+	require.True(t, b)
+}
+
+func TestVerifiedCaptcha_over_quota(t *testing.T) {
+	mr, err := miniredis.Run()
+	assert.NoError(t, err)
+
+	defer mr.Close()
+
+	l := NewVerifiedCaptcha(
+		new(TestVerifiedCaptchaProvider),
+		redis.NewClient(&redis.Options{Addr: mr.Addr()}),
+		WithKeyPrefix("verified:captcha:"),
+		WithKeyExpires(time.Minute*3),
+		WithMaxErrQuota(3),
+	)
+
+	id, _, err := l.Generate(defaultKind,
+		WithGenerateKeyExpires(time.Minute*5),
+		WithGenerateMaxErrQuota(6),
+	)
+	assert.NoError(t, err)
+
+	for i := 0; i < 6; i++ {
+		b := l.Verify(defaultKind, id, badAnswer)
+		require.False(t, b)
+	}
+	b := l.Verify(defaultKind, id, answer)
+	require.False(t, b)
+}
+
+// TODO: success in redis, but failed in miniredis
+// func TestVerifiedCaptcha_Onetime_Timeout(t *testing.T) {
 // 	mr, err := miniredis.Run()
 // 	assert.NoError(t, err)
 //
 // 	defer mr.Close()
 //
 // 	l := NewVerifiedCaptcha(new(TestVerifiedCaptchaProvider),
-// 		redis.NewClient(&redis.Options{
-// 			Addr: mr.Addr(),
-// 		}),
-// 		// redis.NewClient(&redis.Options{
-// 		// 	Addr:     "localhost:6379",
-// 		// 	Password: "123456",
-// 		// 	DB:       9,
-// 		// }),
-// 		WithKeyExpires(time.Second*1),
+// 		redis.NewClient(&redis.Options{Addr: mr.Addr()}),
+// 		// redis.NewClient(&redis.Options{Addr: "localhost:6379", Password: "123456", DB: 0}),
 // 	)
-// 	id, _, err := l.Generate(defaultKind)
+// 	id, _, err := l.Generate(defaultKind, WithGenerateKeyExpires(time.Second*1))
 // 	assert.NoError(t, err)
 //
-// 	time.Sleep(time.Second * 3)
+// 	time.Sleep(time.Second * 2)
 //
-// 	b := l.Match(defaultKind, id, "2", false)
+// 	b := l.Verify(defaultKind, id, "2")
 // 	require.False(t, b)
 // }

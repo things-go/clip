@@ -1,20 +1,35 @@
 package verified
 
-const verifiedScript = `
+const (
+	verifiedGenerateScript = `
 local key = KEYS[1]    -- key
 local answer = ARGV[1] -- 答案
-local clear = tonumber(ARGV[2]) -- 是否清除
+local quota = tonumber(ARGV[2]) -- 最大错误限制次数
+local expires = tonumber(ARGV[3]) -- 过期时间
 
-local wantAnswer = redis.call('GET', key)
-if wantAnswer == false then
-	return 1  -- 键不存在, 验证失败
-end
-if clear == 1 then
-	redis.call('DEL', key)
-end
-
-if wantAnswer == answer then 
-	return 0  -- 成功
-end
-return 1      -- 值不相等, 验证失败
+redis.call("HMSET", key, "answer", answer, "quota", quota, "err", 0)
+redis.call("EXPIRE", key, expires)
+return 0    -- 成功
 `
+	verifiedMatchScript = `
+local key = KEYS[1]    -- key
+local answer = ARGV[1] -- 答案
+
+if redis.call("EXISTS", key) == 0 then
+	return 1   -- 键不存在, 验证失败
+end
+
+local wantAnswer = redis.call("HGET", key, "answer")
+if wantAnswer == answer then
+	redis.call("DEL", key)
+	return 0  -- 成功
+else 
+	local quota = tonumber(redis.call("HGET", key, "quota"))
+	local errCnt = redis.call("HINCRBY", key, "err", 1)
+	if errCnt >= quota then 
+		redis.call("DEL", key)
+	end
+		return 1   -- 值不相等, 验证失败
+end
+`
+)
