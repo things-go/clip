@@ -20,10 +20,10 @@ local code = ARGV[1] -- 验证码
 local maxSendPerDay = tonumber(ARGV[2]) -- 限制一天最大发送次数
 local codeMaxSendPerDay = tonumber(ARGV[3]) -- 限制一天最大发送次数
 local codeMaxErrorQuota = tonumber(ARGV[4]) -- 验证码最大验证失败次数
-local codeAvailWindowSecond = tonumber(ARGV[4]) -- 验证码有效窗口时间, 单位: 秒
-local codeResendIntervalSecond = tonumber(ARGV[5]) -- 验证码重发间隔时间
-local now = tonumber(ARGV[6]) -- 当前时间, 单位秒
-local expires = tonumber(ARGV[7]) -- global key 过期时间, 单位: 秒
+local codeAvailWindowSecond = tonumber(ARGV[5]) -- 验证码有效窗口时间, 单位: 秒
+local codeResendIntervalSecond = tonumber(ARGV[6]) -- 验证码重发间隔时间
+local now = tonumber(ARGV[7]) -- 当前时间, 单位秒
+local expires = tonumber(ARGV[8]) -- global key 过期时间, 单位: 秒
 
 local globalKey = keyPrefix .. target
 local codeKey = keyPrefix .. target .. ":_entry_:{" .. kind .. "}"
