@@ -224,7 +224,6 @@ func NewVerified(p LimitVerifiedProvider, store *redis.Client, opts ...Option) *
 func (v *LimitVerified) Name() string { return v.p.Name() }
 
 // SendCode send code and store in redis cache.
-// opts: only support WithAvailWindowSecond, WithResendIntervalSecond
 func (v *LimitVerified) SendCode(c CodeParam, opts ...CodeParamOption) error {
 	c.takeCodeParamOption(v, opts...)
 
@@ -283,7 +282,6 @@ func (v *LimitVerified) SendCode(c CodeParam, opts ...CodeParamOption) error {
 }
 
 // VerifyCode verify code from redis cache.
-// opts: only support WithMaxErrorQuota
 func (v *LimitVerified) VerifyCode(c CodeParam) error {
 	c.takeCodeParamOption(v)
 

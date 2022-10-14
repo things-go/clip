@@ -9,24 +9,36 @@ import (
 )
 
 const (
-	periodLimitScript = `local limit = tonumber(ARGV[1])
+	periodLimitScript = `
+local key = KEYS[1]
+local quota = tonumber(ARGV[1])
 local window = tonumber(ARGV[2])
-local current = redis.call("INCRBY", KEYS[1], 1)
+
+local current = redis.call("INCRBY", key, 1)
 if current == 1 then
-    redis.call("EXPIRE", KEYS[1], window)
+    redis.call("EXPIRE", key, window)
 end
-if current < limit then
+if current < quota then
     return 0 -- allow
-elseif current == limit then
+elseif current == quota then
     return 1 -- hit quota
 else
     return 2 -- over quata
-end`
-	periodLimitSetQuotaFullScript = `local limit = tonumber(ARGV[1])
-local current = tonumber(redis.call("GET", KEYS[1]))
-if current == nil or current < limit then
-	redis.call("SET", KEYS[1], limit)
-end`
+end
+`
+	periodLimitSetQuotaFullScript = `
+local key = KEYS[1]
+local quota = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])
+
+local current = tonumber(redis.call("GET", key))
+if current == nil then 
+	redis.call("SETEX", key, window, quota)
+elseif current < quota then 
+	redis.call("SET", key, quota)
+end
+return 0
+`
 )
 
 // PeriodLimitState period limit state.
@@ -59,22 +71,23 @@ func (p PeriodLimitState) IsOverQuota() bool { return p == PeriodLimitStsOverQuo
 
 // A PeriodLimit is used to limit requests during a period of time.
 type PeriodLimit struct {
+	// keyPrefix in redis
+	keyPrefix string
 	// a period seconds of time
 	period int
 	// limit quota requests during a period seconds of time.
-	quota int
-	// keyPrefix in redis
-	keyPrefix string
-	store     *redis.Client
-	isAlign   bool
+	quota   int
+	isAlign bool
+	store   *redis.Client
 }
 
 // NewPeriodLimit returns a PeriodLimit with given parameters.
 func NewPeriodLimit(store *redis.Client, opts ...PeriodLimitOption) *PeriodLimit {
 	limiter := &PeriodLimit{
+		keyPrefix: "limit:period:",
 		period:    int(24 * time.Hour / time.Second),
 		quota:     6,
-		keyPrefix: "LIMIT:PERIOD:",
+		isAlign:   false,
 		store:     store,
 	}
 	for _, opt := range opts {
@@ -93,13 +106,16 @@ func (p *PeriodLimit) setPeriod(v time.Duration) {
 func (p *PeriodLimit) setQuota(v int) { p.quota = v }
 
 // Take requests a permit with context, it returns the permit state.
-func (p *PeriodLimit) Take(ctx context.Context, kind, key string, opts ...PeriodLimitParamOption) (PeriodLimitState, error) {
-	po := p.takePeriodLimitParamOption(opts...)
-
+func (p *PeriodLimit) Take(ctx context.Context, key string) (PeriodLimitState, error) {
 	result, err := p.store.Eval(ctx,
 		periodLimitScript,
-		[]string{p.formatKey(kind, key)},
-		[]string{strconv.Itoa(po.quota), strconv.Itoa(po.calcExpireSeconds(p.isAlign))},
+		[]string{
+			p.formatKey(key),
+		},
+		[]string{
+			strconv.Itoa(p.quota),
+			strconv.Itoa(p.calcExpireSeconds()),
+		},
 	).Result()
 	if err != nil {
 		return PeriodLimitStsUnknown, err
@@ -109,7 +125,6 @@ func (p *PeriodLimit) Take(ctx context.Context, kind, key string, opts ...Period
 	if !ok {
 		return PeriodLimitStsUnknown, ErrUnknownCode
 	}
-
 	switch code {
 	case innerPeriodLimitAllowed:
 		return PeriodLimitStsAllowed, nil
@@ -123,35 +138,34 @@ func (p *PeriodLimit) Take(ctx context.Context, kind, key string, opts ...Period
 }
 
 // SetQuotaFull set a permit over quota.
-func (p *PeriodLimit) SetQuotaFull(ctx context.Context, kind, key string, opts ...PeriodLimitParamOption) error {
-	po := p.takePeriodLimitParamOption(opts...)
-
-	err := p.store.Eval(ctx,
+func (p *PeriodLimit) SetQuotaFull(ctx context.Context, key string) error {
+	return p.store.Eval(ctx,
 		periodLimitSetQuotaFullScript,
-		[]string{p.formatKey(kind, key)},
-		[]string{strconv.Itoa(po.quota)},
+		[]string{
+			p.formatKey(key),
+		},
+		[]string{
+			strconv.Itoa(p.quota),
+			strconv.Itoa(p.calcExpireSeconds()),
+		},
 	).Err()
-	if err == redis.Nil {
-		return nil
-	}
-	return err
 }
 
 // Del delete a permit
-func (p *PeriodLimit) Del(ctx context.Context, kind, key string) error {
-	return p.store.Del(ctx, p.formatKey(kind, key)).Err()
+func (p *PeriodLimit) Del(ctx context.Context, key string) error {
+	return p.store.Del(ctx, p.formatKey(key)).Err()
 }
 
 // TTL get key ttl
 // if key not exist, time = -1.
 // if key exist, but not set expire time, t = -2
-func (p *PeriodLimit) TTL(ctx context.Context, kind, key string) (time.Duration, error) {
-	return p.store.TTL(ctx, p.formatKey(kind, key)).Result()
+func (p *PeriodLimit) TTL(ctx context.Context, key string) (time.Duration, error) {
+	return p.store.TTL(ctx, p.formatKey(key)).Result()
 }
 
 // GetInt get current count
-func (p *PeriodLimit) GetInt(ctx context.Context, kind, key string) (int, bool, error) {
-	v, err := p.store.Get(ctx, p.formatKey(kind, key)).Int()
+func (p *PeriodLimit) GetInt(ctx context.Context, key string) (int, bool, error) {
+	v, err := p.store.Get(ctx, p.formatKey(key)).Int()
 	if err != nil {
 		if err == redis.Nil {
 			return 0, false, nil
@@ -161,17 +175,16 @@ func (p *PeriodLimit) GetInt(ctx context.Context, kind, key string) (int, bool, 
 	return v, true, nil
 }
 
-func (p *PeriodLimit) formatKey(kind, key string) string {
-	return p.keyPrefix + kind + ":" + key
+func (p *PeriodLimit) formatKey(key string) string {
+	return p.keyPrefix + key
 }
 
-func (p *PeriodLimit) takePeriodLimitParamOption(opts ...PeriodLimitParamOption) periodLimitParamOption {
-	po := periodLimitParamOption{
-		quota:  p.quota,
-		period: p.period,
+func (p *PeriodLimit) calcExpireSeconds() int {
+	if p.isAlign {
+		now := time.Now()
+		_, offset := now.Zone()
+		unix := now.Unix() + int64(offset)
+		return p.period - int(unix%int64(p.period))
 	}
-	for _, f := range opts {
-		f(&po)
-	}
-	return po
+	return p.period
 }

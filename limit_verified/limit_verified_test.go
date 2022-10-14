@@ -59,7 +59,10 @@ func TestSendCode_Success(t *testing.T) {
 		WithKeyPrefix("verification"),
 		WithKeyExpires(time.Hour),
 	)
-	err = l.SendCode(CodeParam{Target: target, Code: code})
+	err = l.SendCode(
+		CodeParam{Target: target, Code: code},
+		WithAvailWindowSecond(3),
+	)
 	require.NoError(t, err)
 }
 
