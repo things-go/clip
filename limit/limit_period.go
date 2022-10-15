@@ -69,7 +69,7 @@ func (p PeriodLimitState) IsHitQuota() bool { return p == PeriodLimitStsHitQuota
 // IsOverQuota means passed the quota.
 func (p PeriodLimitState) IsOverQuota() bool { return p == PeriodLimitStsOverQuota }
 
-// A PeriodLimit is used to limit requests during a period of time.
+// PeriodLimit is used to limit requests during a period of time.
 type PeriodLimit struct {
 	// keyPrefix in redis
 	keyPrefix string
@@ -158,7 +158,7 @@ func (p *PeriodLimit) Del(ctx context.Context, key string) error {
 
 // TTL get key ttl
 // if key not exist, time = -1.
-// if key exist, but not set expire time, t = -2
+// if key exist, but not set expire time, time = -2
 func (p *PeriodLimit) TTL(ctx context.Context, key string) (time.Duration, error) {
 	return p.store.TTL(ctx, p.formatKey(key)).Result()
 }

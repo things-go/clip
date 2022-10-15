@@ -52,8 +52,8 @@ func NewPeriodLimitManageWithDriver(drivers map[string]PeriodLimitDriver) *Perio
 	return p
 }
 
-// RegisterDriver register a PeriodLimitDriver with kind
-func (p *PeriodLimitManage) RegisterDriver(kind string, d PeriodLimitDriver) error {
+// Register register a PeriodLimitDriver with kind
+func (p *PeriodLimitManage) Register(kind string, d PeriodLimitDriver) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	_, ok := p.driver[kind]
@@ -64,8 +64,8 @@ func (p *PeriodLimitManage) RegisterDriver(kind string, d PeriodLimitDriver) err
 	return nil
 }
 
-// AcquireDriver acquire driver. if driver not exist. it will return UnsupportedPeriodLimitDriver.
-func (p *PeriodLimitManage) AcquireDriver(kind string) PeriodLimitDriver {
+// Acquire driver. if driver not exist. it will return UnsupportedPeriodLimitDriver.
+func (p *PeriodLimitManage) Acquire(kind string) PeriodLimitDriver {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	d, ok := p.driver[kind]
