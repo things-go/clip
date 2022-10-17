@@ -11,10 +11,10 @@ require (
 	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2
-	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6
+	golang.org/x/crypto v0.0.0-20221012134737-56aed061732a
+	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af
-	google.golang.org/genproto v0.0.0-20221010155953-15ba04fc1c0e
+	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -30,6 +30,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20220504180219-658193537a64 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
+	golang.org/x/sys v0.0.0-20221013171732-95e765b1cc43 // indirect
 	golang.org/x/text v0.3.8 // indirect
 )

@@ -27,24 +27,24 @@ type PeriodFailureLimitDriver interface {
 	GetInt(ctx context.Context, key string) (int, bool, error)
 }
 
-// PeriodFailureLimitManage manager limit period failure
-type PeriodFailureLimitManage struct {
+// PeriodFailureLimitManager manage limit period failure
+type PeriodFailureLimitManager struct {
 	mu     sync.RWMutex
 	driver map[string]PeriodFailureLimitDriver
 }
 
-// NewPeriodFailureLimitManage new a instance
-func NewPeriodFailureLimitManage() *PeriodFailureLimitManage {
-	return &PeriodFailureLimitManage{
+// NewPeriodFailureLimitManager new a instance
+func NewPeriodFailureLimitManager() *PeriodFailureLimitManager {
+	return &PeriodFailureLimitManager{
 		driver: map[string]PeriodFailureLimitDriver{
 			unsupportedPeriodFailureLimitKind: new(UnsupportedPeriodFailureLimitDriver),
 		},
 	}
 }
 
-// NewPeriodFailureLimitManageWithDriver new a instance with driver
-func NewPeriodFailureLimitManageWithDriver(drivers map[string]PeriodFailureLimitDriver) *PeriodFailureLimitManage {
-	p := &PeriodFailureLimitManage{
+// NewPeriodFailureLimitManagerWithDriver new a instance with driver
+func NewPeriodFailureLimitManagerWithDriver(drivers map[string]PeriodFailureLimitDriver) *PeriodFailureLimitManager {
+	p := &PeriodFailureLimitManager{
 		driver: map[string]PeriodFailureLimitDriver{
 			unsupportedPeriodFailureLimitKind: new(UnsupportedPeriodFailureLimitDriver),
 		},
@@ -55,8 +55,8 @@ func NewPeriodFailureLimitManageWithDriver(drivers map[string]PeriodFailureLimit
 	return p
 }
 
-// Register register a PeriodFailureLimitDriver with kind.
-func (p *PeriodFailureLimitManage) Register(kind string, d PeriodFailureLimitDriver) error {
+// PeriodFailureLimitManager register a PeriodFailureLimitDriver with kind.
+func (p *PeriodFailureLimitManager) Register(kind string, d PeriodFailureLimitDriver) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	_, ok := p.driver[kind]
@@ -68,7 +68,7 @@ func (p *PeriodFailureLimitManage) Register(kind string, d PeriodFailureLimitDri
 }
 
 // Acquire driver. if driver not exist. it will return UnsupportedPeriodFailureLimitDriver.
-func (p *PeriodFailureLimitManage) Acquire(kind string) PeriodFailureLimitDriver {
+func (p *PeriodFailureLimitManager) Acquire(kind string) PeriodFailureLimitDriver {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	d, ok := p.driver[kind]

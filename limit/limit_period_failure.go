@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	periodFailureLimitScript = `
+	periodFailureLimitFixedScript = `
 local key = KEYS[1] -- key
 local quota = tonumber(ARGV[1]) -- 限制次数
 local window = tonumber(ARGV[2]) -- 限制时间
@@ -36,7 +36,7 @@ if current <= quota then
 end
 return 2 -- 超过失败最大次数限制
 `
-	periodFailureLimitSetQuotaFullScript = `
+	periodFailureLimitFixedSetQuotaFullScript = `
 local key = KEYS[1]
 local quota = tonumber(ARGV[1])
 local window = tonumber(ARGV[2])
@@ -82,7 +82,7 @@ func (p PeriodFailureLimitState) IsWithinQuota() bool { return p == PeriodFailur
 // IsOverQuota means passed the quota.
 func (p PeriodFailureLimitState) IsOverQuota() bool { return p == PeriodFailureLimitStsOverQuota }
 
-// PeriodFailureLimit is used to limit requests when failure during a period of time.
+// A PeriodFailureLimit is used to limit requests when failure during a period of time.
 type PeriodFailureLimit struct {
 	// a period seconds of time
 	period int
@@ -99,7 +99,7 @@ func NewPeriodFailureLimit(store *redis.Client, opts ...PeriodLimitOption) *Peri
 	limiter := &PeriodFailureLimit{
 		period:    int(24 * time.Hour / time.Second),
 		quota:     6,
-		keyPrefix: "limit:period:failure:",
+		keyPrefix: "limit:period:failure:", // limit:period:failure:
 		store:     store,
 	}
 	for _, opt := range opts {
@@ -118,7 +118,7 @@ func (p *PeriodFailureLimit) setPeriod(v time.Duration) {
 func (p *PeriodFailureLimit) setQuota(v int) { p.quota = v }
 
 // CheckErr requests a permit state.
-// same as Check, success = err == nil
+// same as Check
 func (p *PeriodFailureLimit) CheckErr(ctx context.Context, key string, err error) (PeriodFailureLimitState, error) {
 	return p.Check(ctx, key, err == nil)
 }
@@ -130,7 +130,7 @@ func (p *PeriodFailureLimit) Check(ctx context.Context, key string, success bool
 		s = "1"
 	}
 	result, err := p.store.Eval(ctx,
-		periodFailureLimitScript,
+		periodFailureLimitFixedScript,
 		[]string{p.formatKey(key)},
 		[]string{
 			strconv.Itoa(p.quota),
@@ -160,7 +160,7 @@ func (p *PeriodFailureLimit) Check(ctx context.Context, key string, success bool
 // SetQuotaFull set a permit over quota.
 func (p *PeriodFailureLimit) SetQuotaFull(ctx context.Context, key string) error {
 	err := p.store.Eval(ctx,
-		periodFailureLimitSetQuotaFullScript,
+		periodFailureLimitFixedSetQuotaFullScript,
 		[]string{p.formatKey(key)},
 		[]string{
 			strconv.Itoa(p.quota),
