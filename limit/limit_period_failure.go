@@ -45,7 +45,7 @@ local current = tonumber(redis.call("GET", key))
 if current == nil then 
 	redis.call("SETEX", key, window, quota)
 elseif current < quota then 
-	redis.call("SET", key, quota)
+	redis.call("SET", key, quota, "KEEPTTL")
 end
 return 0
 `
