@@ -13,7 +13,7 @@ require (
 	go.uber.org/multierr v1.8.0
 	golang.org/x/crypto v0.3.0
 	golang.org/x/exp v0.0.0-20221106115401-f9659909a136
-	golang.org/x/time v0.2.0
+	golang.org/x/time v0.3.0
 	google.golang.org/genproto v0.0.0-20221107162902-2d387536bcdd
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
