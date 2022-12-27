@@ -8,10 +8,10 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.8.1
-	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.3.0
-	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db
-	google.golang.org/genproto v0.0.0-20221206210731-b1a01be3a5f6
+	go.uber.org/multierr v1.9.0
+	golang.org/x/crypto v0.4.0
+	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
+	google.golang.org/genproto v0.0.0-20221207170731-23e4bf6bdc37
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 )
