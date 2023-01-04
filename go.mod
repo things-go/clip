@@ -9,7 +9,7 @@ require (
 	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/multierr v1.9.0
-	golang.org/x/crypto v0.4.0
+	golang.org/x/crypto v0.5.0
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	google.golang.org/genproto v0.0.0-20221207170731-23e4bf6bdc37
 	google.golang.org/protobuf v1.28.1
@@ -23,6 +23,6 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 )
